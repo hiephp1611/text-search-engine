@@ -4,6 +4,7 @@ from nltk.tokenize import TreebankWordTokenizer
 from nltk.stem.porter import PorterStemmer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
 
 REMOVE_PUNCTUATION_TABLE= str.maketrans({x: None for x in string.punctuation})
 TOKENIZER = TreebankWordTokenizer()
@@ -19,6 +20,10 @@ docs = [
        chatbot capability''',
 ]
 
+feedback = {
+        'who makes chatbots': [(2, 0.), (0, 1.), (1, 1.), (0, 1.)],
+        'about page': [(0, 1.)]
+}
 ########################################
 example_doc = docs[1]
 
@@ -37,10 +42,14 @@ def tokenize_and_stem(s):
 vectorizer = TfidfVectorizer(tokenizer = tokenize_and_stem, stop_words = 'english')
 vectorizer.fit(docs)
 
-query = 'contact email to chat to martin'
-query_vector = vectorizer.transform([query]).todense()
 
 # Calculate cosine distance between the query vector and all vectors for all documents  in collection
-doc_vectors = vectorizer.transform(docs)
-similarity = cosine_similarity(query_vector,doc_vectors)
-print(similarity)
+query = 'contact email to chat to martin'
+query_vector = vectorizer.transform([query]).toarray()
+doc_vectors = vectorizer.transform(docs).toarray()
+similarity = cosine_similarity(vectorizer.transform(['who makes chatbots']).toarray(), doc_vectors)
+
+# Rank documents by their scores (elements of ranks are indexes of docs)
+ranks= (-similarity).argsort(axis=None)
+most_relevant_doc = docs[ranks[0]]
+print(most_relevant_doc)
